@@ -8,7 +8,7 @@ app = Flask(__name__)
 def send_alert():
     try:
         data = request.json
-        print("📡 낙상자 알림 요청 수신:", data)
+        print("낙상자 알림 요청 수신:", data)
 
         # Android 앱으로 POST 요청 전송
         payload = {
@@ -18,7 +18,7 @@ def send_alert():
         }
 
         response = requests.post(ANDROID_API_URL, json=payload)
-        print("📲 Android 앱 응답:", response.status_code)
+        print("Android 앱 응답:", response.status_code)
 
         return jsonify({"status": "success", "android_status": response.status_code}), 200
     except Exception as e:
