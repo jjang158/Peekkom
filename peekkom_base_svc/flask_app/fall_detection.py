@@ -1,41 +1,55 @@
-import cv2
+from flask import jsonify
 from ultralytics import YOLO
+from werkzeug.utils import secure_filename
+import os
+from datetime import datetime
+import requests
+from config import ANDROID_API_URL, CONFIDENCE_THRESHOLD, UPLOAD_FOLDER
 
-# YOLO 모델 로드 (낙상자 탐지용으로 학습된 모델 경로)
-model = YOLO("yolov8n.pt")  # 예: yolov8n.pt 또는 커스텀 모델
+# 모델 로드
+model = YOLO("../../fall_detection/fall_detection_v1.pt")
 
-# 웹캠 열기
-cap = cv2.VideoCapture(0)  # 0번 카메라
+# 파일 업로드
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+def detect_fall(file):
+    # 이미지 분석
+    results = model(file)
+    fall_detected = False
 
-    # YOLO 모델로 프레임 분석
-    results = model(frame)
-
-    # 결과 시각화
-    annotated_frame = results[0].plot()
-
-    # 낙상자 탐지 여부 확인
     for result in results:
         for box in result.boxes:
-            cls_id = int(box.cls[0])
-            confidence = float(box.conf[0])
-            label = model.names[cls_id]
+            cls = int(box.cls[0])
+            conf = float(box.conf[0])
+            label = model.names[cls]
+            if label == "fall" and conf > CONFIDENCE_THRESHOLD:
+                fall_detected = True
+                print(f"[ALERT] 낙상 감지 - confidence: {conf}")
+                break
 
-            # "fall"이라는 클래스를 감지했을 경우
-            if label.lower() == "fall" and confidence > 0.5:
-                print("[ALERT] 낙상자 감지됨!")
-                # 이후 Flask API 호출 로직으로 연동 예정
+    # 결과에 따라 Android로 알림 전송
+    if fall_detected:
+        payload = {
+            "type": "fall_detected",
+            "timestamp": datetime.now().isoformat(),
+            "message": "낙상 감지됨"
+        }
 
-    # 화면에 프레임 출력
-    cv2.imshow("Fall Detection", annotated_frame)
+        # 1. Android 앱 연동 (알림)
+        try:
+            res = requests.post(ANDROID_API_URL, json=payload)
+            print(f"[INFO] Android 앱 응답 코드: {res.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"[ERROR] Android API 요청 실패: {e}")
+            return jsonify({'error': 'Android API 연동 실패'}), 502
 
-    # 종료 조건: 'q' 키 누르면 종료
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+        # 2. 낙상 이미지 저장
+        try:
+            filename = secure_filename(file.filename)
+            save_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(save_path)
+        except Exception as e:
+            print(f"[ERROR] 이미지 저장 실패: {e}")
+            return jsonify({'error': '이미지 저장 실패'}), 500
 
-cap.release()
-cv2.destroyAllWindows()
+    return jsonify({'fall_detected': fall_detected})
