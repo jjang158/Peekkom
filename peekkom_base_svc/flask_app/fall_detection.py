@@ -4,17 +4,22 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 import requests
+import numpy as np
+import cv2
 from config import ANDROID_API_URL, CONFIDENCE_THRESHOLD, UPLOAD_FOLDER
 
 # 모델 로드
-model = YOLO("../../fall_detection/fall_detection_v1.pt")
+model = YOLO("../fall_detection/fall_detection_v1.pt")
 
 # 파일 업로드
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def detect_fall(file):
+    file_bytes = np.frombuffer(file.read(), np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
     # 이미지 분석
-    results = model(file)
+    results = model(img)
     fall_detected = False
 
     for result in results:
