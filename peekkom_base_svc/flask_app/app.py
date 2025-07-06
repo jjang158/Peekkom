@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from fall_detection import detect_fall
+from iv_detection import check_ivbag
 
 app = Flask(__name__)
 
@@ -15,10 +16,10 @@ def upload():
     # 낙상자 탐지
     detect_fall(file)
 
-    # TODO - 링거 확인
+    # 링거 확인
+    check_ivbag(file)
 
-
-    return jsonify({'message': f'확인 완료: {file.filename}'}), 200
+    return jsonify({"status": 'success', 'message': f'확인 완료: {file.filename}'}), 200
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000)

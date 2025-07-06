@@ -6,7 +6,8 @@ from datetime import datetime
 import requests
 import numpy as np
 import cv2
-from config import ANDROID_API_URL, CONFIDENCE_THRESHOLD, UPLOAD_FOLDER
+from config import FALL_CONFIDENCE_THRESHOLD, UPLOAD_FOLDER
+from send_notification import send_fcm_notification
 
 # 모델 로드
 model = YOLO("../fall_detection/fall_detection_v1.pt")
@@ -27,26 +28,25 @@ def detect_fall(file):
             cls = int(box.cls[0])
             conf = float(box.conf[0])
             label = model.names[cls]
-            if label == "fall" and conf > CONFIDENCE_THRESHOLD:
+            if label == "fall" and conf > FALL_CONFIDENCE_THRESHOLD:
                 fall_detected = True
                 print(f"[ALERT] 낙상 감지 - confidence: {conf}")
                 break
 
     # 결과에 따라 Android로 알림 전송
     if fall_detected:
-        payload = {
-            "type": "fall_detected",
-            "timestamp": datetime.now().isoformat(),
-            "message": "낙상 감지됨"
-        }
-
         # 1. Android 앱 연동 (알림)
         try:
-            res = requests.post(ANDROID_API_URL, json=payload)
+            body = {
+                "type": "fall_detected",
+                "timestamp": datetime.now().isoformat(),
+                "message": "낙상자가 감지되었습니다!"
+            }
+            res = send_fcm_notification('낙상 감지', body)
             print(f"[INFO] Android 앱 응답 코드: {res.status_code}")
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Android API 요청 실패: {e}")
-            return jsonify({'error': 'Android API 연동 실패'}), 502
+            return jsonify({"status": 'error', "message": 'Android API 연동 실패'}), 502
 
         # 2. 낙상 이미지 저장
         try:
@@ -55,6 +55,6 @@ def detect_fall(file):
             file.save(save_path)
         except Exception as e:
             print(f"[ERROR] 이미지 저장 실패: {e}")
-            return jsonify({'error': '이미지 저장 실패'}), 500
+            return jsonify({"status": 'error', "message": '이미지 저장 실패'}), 500
 
-    return jsonify({'fall_detected': fall_detected})
+    return jsonify({"status": 'success', 'message': f'fall_detected: {fall_detected}'}), 200
