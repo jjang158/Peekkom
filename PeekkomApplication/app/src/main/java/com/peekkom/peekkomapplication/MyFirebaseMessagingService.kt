@@ -1,6 +1,5 @@
 package com.peekkom.peekkomapplication
 
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -12,8 +11,12 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
-@SuppressLint("MissingFirebaseInstanceTokenRefresh")
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        Log.d("FCM_TOKEN", "New token: $token")
+    }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d("FCM", "From: ${remoteMessage.from}")
