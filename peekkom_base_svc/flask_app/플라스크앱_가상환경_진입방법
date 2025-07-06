@@ -1,0 +1,5 @@
+#가상환경 경로
+cd /mnt/c/Users/sa358/IdeaProjects/Peekkom/peekkom_base_svc/flask_app
+
+#가상환경 진입
+source venv/bin/activate
