@@ -37,13 +37,13 @@ def detect_fall(file):
     if fall_detected:
         # 1. Android 앱 연동 (알림)
         try:
-            body = {
-                "type": "fall_detected",
-                "timestamp": datetime.now().isoformat(),
-                "message": "낙상자가 감지되었습니다!"
-            }
-            res = send_fcm_notification('낙상 감지', body)
-            print(f"[INFO] Android 앱 응답 코드: {res.status_code}")
+#             body = {
+#                 "type": "fall_detected",
+#                 "timestamp": datetime.now().isoformat(),
+#                 "message":
+#             }
+            res = send_fcm_notification('낙상 감지', "낙상자가 감지되었습니다!")
+            print(f"[INFO] Android 앱 응답 코드: {res}")
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Android API 요청 실패: {e}")
             return jsonify({"status": 'error', "message": 'Android API 연동 실패'}), 502
