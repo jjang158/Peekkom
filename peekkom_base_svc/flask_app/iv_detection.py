@@ -53,19 +53,16 @@ def check_ivbag(file):
 
     # 알림 처리
     if percent < THRESHOLD:
-#         body = {
-#             "type": "fall_detected",
-#             "timestamp": datetime.now().isoformat(),
-#             "message":
-#         }
         send_fcm_notification(
             title='수액 부족 알림',
             body=f'수액 잔량이 {percent}%로 임계치보다 낮습니다!'
         )
 
     return jsonify({
-        'iv_bag_area': iv_area,
-        'saline_level_area': saline_area,
-        'remaining_percent': percent,
-        'alert_sent': percent < THRESHOLD
-    })
+        "status": 'success',
+        "message" : f'iv_bag percent: {percent}',
+        "detail" : {'iv_bag_area': iv_area,
+                     'saline_level_area': saline_area,
+                     'remaining_percent': percent,
+                     'alert_sent': percent < THRESHOLD}
+    }), 200
