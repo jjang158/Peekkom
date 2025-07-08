@@ -1,0 +1,8 @@
+names:
+- '-'
+- fall
+- not_fallen
+nc: 3
+test: /content/fall_detection/test
+train: /content/fall_detection/train
+val: /content/fall_detection/valid
